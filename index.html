@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title id="pageTitle">selrisapppremium ♡</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <!-- ตัวอ่าน QR Code สลิปโอนเงิน -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+  <style>
+    :root {
+      --c-lightest: #fffafd;
+      --c-soft: #f7e7f0;
+      --c-border: #e9d2de;
+      --c-main: #d9b8c5;
+      --c-deep: #b58d9e;
+      --agent-gold: #f59e0b;
+      --agent-bg: #fffbeb;
+      --agent-border: #fde68a;
+      --text-main: #4d3d44;
+      --text-muted: #8c737e;
+      --glow-soft: 0 10px 28px rgba(217, 184, 197, 0.35);
+      --card-bg: rgba(255, 250, 253, 0.94);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Quicksand', 'Mitr', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #fffafd 0%, #f7e7f0 55%, #eddbe5 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px 12px 80px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* กล่องแถบด้านบน */
+    .top-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card-bg);
+      border: 1.5px solid var(--c-border);
+      border-radius: 30px;
+      padding: 5px 8px;
+      margin-bottom: 14px;
+      box-shadow: var(--glow-soft);
+      backdrop-filter: blur(12px);
+    }
+
+    .menu-trigger-btn, .music-trigger-btn {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1.5px solid var(--c-border);
+      background: #ffffff;
+      color: var(--c-deep);
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 0.15s;
+    }
+    .menu-trigger-btn:active, .music-trigger-btn:active { transform: scale(0.92); }
+
+    .header-nav-scroll {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 2px 0;
+    }
+    .header-nav-scroll::-webkit-scrollbar { display: none; }
+
+    .nav-pill-btn {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 11px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .nav-pill-btn.active {
+      background: #ffffff;
+      color: var(--c-deep);
+      box-shadow: 0 2px 8px rgba(217, 184, 197, 0.4);
+      border: 1px solid var(--c-border);
+      font-weight: 700;
+    }
+
+    /* เมนูเลื่อนด้านข้าง (Side Drawer) */
+    .side-drawer {
+      position: fixed;
+      top: 0;
+      left: -290px;
+      width: 280px;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(16px);
+      z-index: 999999;
+      box-shadow: 10px 0 35px rgba(0,0,0,0.15);
+      transition: left 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 18px;
+      border-right: 2px solid var(--c-border);
+    }
+    .side-drawer.open { left: 0; }
+
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      z-index: 999990;
+      display: none;
+    }
+    .drawer-overlay.open { display: block; }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      border-bottom: 1.5px dashed var(--c-border);
+      padding-bottom: 12px;
+    }
+    .drawer-close {
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .user-profile-badge {
+      background: linear-gradient(135deg, var(--c-soft), var(--c-lightest));
+      border: 1.5px solid var(--c-border);
+      border-radius: 18px;
+      padding: 12px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .role-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 4px;
+    }
+    .role-user { background: var(--c-soft); color: var(--c-deep); border: 1px solid var(--c-border); }
+    .role-agent { background: var(--agent-bg); color: var(--agent-gold); border: 1px solid var(--agent-border); }
+    .user-wallet-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--c-deep);
+      margin-top: 4px;
+    }
+
+    .drawer-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .drawer-nav-btn {
+      width: 100%;
+      background: #ffffff;
+      border: 1.5px solid var(--c-border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .drawer-nav-btn.active {
+      background: linear-gradient(135deg, var(--c-main), var(--c-deep));
+      color: #ffffff;
+      border-color: transparent;
+    }
+
+    /* รูปลอย */
+    .floating-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+    .float-item {
+      position: absolute;
+      bottom: -70px;
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      animation: floatMotion 12s linear infinite;
+      opacity: 0.85;
+      filter: drop-shadow(0 4px 10px rgba(217, 184, 197, 0.4));
+    }
+    @keyframes floatMotion {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+      15% { opacity: 0.9; }
+      85% { opacity: 0.9; }
+      100% { transform: translateY(-115vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* แท็บคอนเทนต์ */
+    .tab-view { display: none; }
+    .tab-view.active { display: block; animation: tabFade 0.25s ease; }
+    @keyframes tabFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .glass-card {
+      background: var(--card-bg);
+      border: 1.5px solid #ffffff;
+      border-radius: 28px;
+      padding: 16px;
+      box-shadow: var(--glow-soft);
+      backdrop-filter: blur(12px);
+      margin-bottom: 14px;
+    }
+
+    /* หน้า 1: โปรไฟล์ร้าน */
+    .banner-wrap {
+      width: 100%;
+      height: 140px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--c-soft);
+      border: 1.5px solid #fff;
+    }
+    .banner-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-wrap {
+      position: relative;
+      margin-top: -46px;
+      text-align: center;
+    }
+    .profile-wrap img {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3.5px solid #ffffff;
+      box-shadow: 0 6px 18px rgba(217, 184, 197, 0.45);
+      background: #fff;
+    }
+    .shop-name-title {
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--c-deep);
+      margin-top: 10px;
+      text-align: center;
+    }
+    .shop-bio-box {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      line-height: 1.65;
+      white-space: pre-line;
+      text-align: center;
+      padding: 0 10px;
+    }
+
+    .line-oa-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--c-main), var(--c-deep));
+      color: #ffffff;
+      text-decoration: none;
+      padding: 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 16px;
+      box-shadow: 0 6px 18px rgba(181, 141, 158, 0.35);
+      border: 1.5px solid rgba(255, 255, 255, 0.8);
+      transition: transform 0.2s;
+    }
+    .line-oa-btn:active { transform: scale(0.97); }
+
+    /* หน้า 2: ตารางกล่องแอพพรีเมียม */
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .app-box-card {
+      background: #ffffff;
+      border: 1.5px solid var(--c-border);
+      border-radius: 22px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      transition: transform 0.15s;
+    }
+    .app-box-card:active { transform: scale(0.97); }
+    .app-box-thumb {
+      width: 100%;
+      aspect-ratio: 1/1;
+      object-fit: cover;
+      display: block;
+      background: #fafafa;
+    }
+    .app-box-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      text-align: center;
+      padding: 10px 6px 12px;
+    }
+
+    /* Modal เลือกแพ็กเกจแอพ */
+    .app-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(6px);
+      z-index: 9999999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .app-modal.open { display: flex; }
+    .app-modal-content {
+      background: #ffffff;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 28px;
+      padding: 22px 18px;
+      border: 2px solid var(--c-border);
+      box-shadow: var(--glow-soft);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .plan-option-card {
+      border: 1.5px solid var(--c-border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      background: #fff;
+    }
+    .plan-option-card.selected {
+      border-color: var(--c-deep);
+      background: var(--c-soft);
+    }
+
+    /* หน้า 3: เติมเงิน & แนบสลิป */
+    .art-text-box {
+      background: #ffffff;
+      border: 1.5px dashed var(--c-border);
+      border-radius: 20px;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre;
+      text-align: center;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      overflow-x: auto;
+    }
+    .copy-pill-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 1.5px solid var(--c-border);
+      border-radius: 16px;
+      padding: 11px 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+    .copy-pill-btn:active { background: var(--c-soft); }
+
+    .slip-uploader-box {
+      border: 2px dashed var(--c-deep);
+      border-radius: 22px;
+      padding: 20px 14px;
+      text-align: center;
+      background: #fff9fb;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: all 0.2s;
+    }
+    .slip-uploader-box:active { background: var(--c-soft); }
+
+    /* หน้า 4: ประวัติสั่งซื้อ */
+    .order-history-card {
+      background: #ffffff;
+      border: 1.5px solid var(--c-border);
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+    .order-header-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13.5px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .order-code-box {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12.5px;
+      color: #334155;
+      word-break: break-all;
+      user-select: text;
+    }
+
+    /* ปุ่มหลัก */
+    .btn-main {
+      width: 100%;
+      background: linear-gradient(135deg, var(--c-main), var(--c-deep));
+      color: #ffffff;
+      border: none;
+      padding: 13px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(181, 141, 158, 0.35);
+      margin-top: 8px;
+    }
+    .btn-main:active { transform: scale(0.98); }
+
+    .input-field {
+      width: 100%;
+      border: 1.5px solid var(--c-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 13px;
+      outline: none;
+      margin-bottom: 10px;
+      background: #ffffff;
+    }
+    .input-field:focus { border-color: var(--c-deep); }
+
+    .auth-toggle-link {
+      font-size: 12px;
+      color: var(--c-deep);
+      text-align: center;
+      cursor: pointer;
+      margin-top: 10px;
+      display: block;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- เพลงประกอบพื้นหลัง -->
+  <audio id="bgMusic" loop preload="auto" src="https://file.garden/asG8Gt-rqWIpi3II/%E0%B8%A2%E0%B8%B4%E0%B8%99%E0%B8%94%E0%B8%B5%20Ost.%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%B2%E0%B8%A5%E0%B8%94%E0%B8%B2%20sarah%20salola%20Official%20MV.mp3"></audio>
+
+  <!-- รูปลอย -->
+  <div class="floating-layer" id="floatContainer"></div>
+
+  <!-- แถบเมนูด้านข้าง (Drawer) -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer(false)"></div>
+  <div class="side-drawer" id="sideDrawer">
+    <div class="drawer-header">
+      <span style="font-weight:700; color:var(--c-deep); font-size:16px;">selrisapppremium ♡</span>
+      <button type="button" class="drawer-close" onclick="toggleDrawer(false)">✕</button>
+    </div>
+
+    <!-- บัตรโปรไฟล์สมาชิก พร้อมยศตัวแทน -->
+    <div class="user-profile-badge" id="drawerUserBadge">
+      <div id="drawerUserUsername" style="font-weight:700; font-size:14px; color:var(--text-main);">ยังไม่ได้เข้าสู่ระบบ</div>
+      <div id="drawerUserRole"></div>
+      <div id="drawerUserEmail" style="font-size:11.5px; color:var(--text-muted); margin-top:2px;"></div>
+      <div class="user-wallet-val" id="drawerUserBalance">฿0.00</div>
+    </div>
+
+    <div class="drawer-nav-list">
+      <button type="button" class="drawer-nav-btn active" id="drawer-btn-profile" onclick="switchNavTab('profile')">🏠 home (โปรไฟล์ร้าน)</button>
+      <button type="button" class="drawer-nav-btn" id="drawer-btn-apps" onclick="switchNavTab('apps')">📱 apppremium</button>
+      <button type="button" class="drawer-nav-btn" id="drawer-btn-topup" onclick="switchNavTab('topup')">💸 payment (เติมเงิน)</button>
+      <button type="button" class="drawer-nav-btn" id="drawer-btn-history" onclick="switchNavTab('history')">📜 ประวัติการสั่งซื้อ</button>
+      <button type="button" class="drawer-nav-btn" id="drawerAuthBtn" onclick="openLoginModal()">🔑 เข้าสู่ระบบ</button>
+      <button type="button" class="drawer-nav-btn" id="drawerRegisterBtn" onclick="openRegisterModal()" style="background:#fff9fb; border-color:var(--c-deep); color:var(--c-deep);">✨ สมัครสมาชิกใหม่</button>
+    </div>
+  </div>
+
+  <div class="container">
+    
+    <!-- Top Header Bar -->
+    <div class="top-header">
+      <button type="button" class="menu-trigger-btn" onclick="toggleDrawer(true)">☰</button>
+      
+      <div class="header-nav-scroll">
+        <button type="button" class="nav-pill-btn active" id="nav-btn-profile" onclick="switchNavTab('profile')">home</button>
+        <button type="button" class="nav-pill-btn" id="nav-btn-apps" onclick="switchNavTab('apps')">apppremium</button>
+        <button type="button" class="nav-pill-btn" id="nav-btn-topup" onclick="switchNavTab('topup')">payment</button>
+        <button type="button" class="nav-pill-btn" id="nav-btn-history" onclick="switchNavTab('history')">ประวัติการสั่งซื้อ</button>
+      </div>
+
+      <button type="button" class="music-trigger-btn" onclick="toggleMusic()">🎵</button>
+    </div>
+
+    <!-- 1. แท็บ home (โปรไฟล์ร้าน) -->
+    <div class="tab-view active" id="tab-profile">
+      <div class="glass-card">
+        <div class="banner-wrap">
+          <img id="bannerImg" src="https://files.catbox.moe/3y894z.gif" alt="Banner">
+        </div>
+        <div class="profile-wrap">
+          <img id="profileImg" src="https://files.catbox.moe/r28bpo.jpeg" alt="Profile">
+        </div>
+        <h1 class="shop-name-title" id="shopNameText">selrisapppremium ♡</h1>
+        <div class="shop-bio-box" id="shopBioText">
+ยินดีต้อนรับเข้าสู่ร้าน selrisapppremium ♡
+เชิญเลือกดูแอพพรีเมี่ยมก่อนได้เลยนะคะ มีปัญหาตรงไหนทักไลน์ @861pblyp
+        </div>
+        <a href="https://lin.ee/t0MNqJV" target="_blank" class="line-oa-btn" id="lineOaLink">
+          💬 ทัก LINE Officials ติดต่อร้านค้า
+        </a>
+      </div>
+    </div>
+
+    <!-- 2. แท็บ apppremium (แสดงราคาส่งเมื่อเป็นตัวแทน) -->
+    <div class="tab-view" id="tab-apps">
+      <div class="glass-card" style="padding-bottom:20px;">
+        <h2 style="font-size:16px; font-weight:700; color:var(--c-deep); text-align:center; margin-bottom:14px;">
+          ✨ เลือกแอพพรีเมี่ยมที่ต้องการ ✨
+        </h2>
+        <div class="apps-grid" id="appsGrid"></div>
+      </div>
+    </div>
+
+    <!-- 3. แท็บ payment (เติมเงิน & สแกนสลิป) -->
+    <div class="tab-view" id="tab-topup">
+      <div class="glass-card">
+        <h2 style="font-size:16px; font-weight:700; color:var(--c-deep); text-align:center; margin-bottom:12px;">
+          💸 ช่องทางการชำระเงิน
+        </h2>
+
+        <!-- กล่องอาร์ตเลขบัญชี -->
+        <div class="art-text-box">⠀ ּ⠀ ⠀⠀ཾ⠀ ⠀ ⠀⠀ ⠀𓈒.
+   ゙♡༷ׄ🎹       ּ    จำนวนเงินแอพ bat݂h݁
+   ⠀ ݁⠀ ⠀⠀ ༷⠀⠀ ⠀ ⠀⠀ּ
+w݂alle݁t𓈒  ּ           𓈒
+       0951725352
+    ּ   1581132944
+k-plus𓈒   ཾ     ݂     𓈒
+           ݁       ݂sent݂ pro݁of ּ
+    ༚ּᥬᩤ♡ཾ༷         ݁   sּlip 𓈒. !</div>
+
+        <!-- กล่องคัดลอกบัญชี -->
+        <div class="copy-pill-btn" onclick="copyText('1581142944', 'คัดลอกเลขบัญชี K-Bank แล้ว')">
+          <span>🏦 K-Bank: 1581142944</span>
+          <span style="color:var(--c-deep); font-size:12px;">คัดลอก</span>
+        </div>
+        <div class="copy-pill-btn" onclick="copyText('0951725352', 'คัดลอกเบอร์ Wallet แล้ว')">
+          <span>👛 Wallet: 0951725352</span>
+          <span style="color:var(--c-deep); font-size:12px;">คัดลอก</span>
+        </div>
+
+        <!-- กล่องอาร์ตโน้ตสลิป -->
+        <div class="art-text-box" style="margin-top:12px;">༚ּᥬᩤ♡ཾ༷            n݂ote slip݁
+         𓈒ซื้อขายกับ line @861pblyp
+⠀༷ ⠀ ⠀⠀ ⠀⠀ ⠀ ⠀⠀ ⠀𓈒.
+𓈒   ݂   ཾ    𓈒หาּกลืมโน๊݂ต ݁
+โอ݁นใ݂หม่ 0.01 
+       ֺ #  𓈒พ݂ร้อม݁โนּ๊ตส݂ลิปּ
+⠀ ⠀ ݁⠀⠀ ⠀⠀ ⠀ ⠀⠀ ⠀݂
+ลูกּค้าเก่า݂݁⠀  ⠀  𓈒ִ֯♡🎹𓂂
+ไม่ต้݂องโน๊ตน݁ะคะּ</div>
+
+        <!-- กล่องคัดลอกโน้ตสลิป -->
+        <div class="copy-pill-btn" onclick="copyText('ซื้อขายกับ line @861pblyp', 'คัดลอกข้อความโน้ตสลิปแล้ว')">
+          <span>📝 ซื้อขายกับ line @861pblyp</span>
+          <span style="color:var(--c-deep); font-size:12px;">คัดลอก</span>
+        </div>
+
+        <!-- แนบสลิปตรวจอัตโนมัติ -->
+        <div class="slip-uploader-box" onclick="document.getElementById('slipFileInput').click()">
+          <span style="font-size:28px;">🧾</span>
+          <div style="font-weight:700; color:var(--c-deep); margin-top:4px;">แนบสลิปโอนเงิน (ตรวจยอดเงินอัตโนมัติ 100%)</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">ระบบจะสแกน QR Code อ่านยอดเงินที่โอนจริง และเติมเข้าสู่กระเป๋าของคุณทันที</div>
+          <input type="file" id="slipFileInput" accept="image/*" style="display:none;" onchange="handleSlipUpload(event)">
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. แท็บประวัติการสั่งซื้อ -->
+    <div class="tab-view" id="tab-history">
+      <div class="glass-card">
+        <h2 style="font-size:16px; font-weight:700; color:var(--c-deep); text-align:center; margin-bottom:14px;">
+          📜 ประวัติการสั่งซื้อของคุณ
+        </h2>
+        <div id="orderHistoryList">
+          <p style="text-align:center; color:var(--text-muted); font-size:13px; padding:20px;">กรุณาเข้าสู่ระบบก่อนสั่งซื้อนะคะ ♡</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal 1: เข้าสู่ระบบ -->
+  <div class="app-modal" id="loginModal">
+    <div class="app-modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:17px; font-weight:700; color:var(--c-deep);">เข้าสู่ระบบ ♡</h3>
+        <button type="button" class="drawer-close" onclick="closeLoginModal()">✕</button>
+      </div>
+      <input type="text" id="loginUsername" class="input-field" placeholder="ชื่อผู้ใช้ของคุณ (Username)">
+      <input type="password" id="loginPassword" class="input-field" placeholder="รหัสผ่าน">
+      <button type="button" class="btn-main" onclick="handleUserLogin()">เข้าสู่ระบบ</button>
+      
+      <span class="auth-toggle-link" onclick="openForgotModal()">ลืมรหัสผ่านใช่ไหม? คลิกที่นี่</span>
+      <span class="auth-toggle-link" style="color:var(--text-muted); margin-top:6px;" onclick="switchToRegister()">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</span>
+    </div>
+  </div>
+
+  <!-- Modal 2: สมัครสมาชิก -->
+  <div class="app-modal" id="registerModal">
+    <div class="app-modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:17px; font-weight:700; color:var(--c-deep);">สมัครสมาชิกใหม่ ✨</h3>
+        <button type="button" class="drawer-close" onclick="closeRegisterModal()">✕</button>
+      </div>
+      <input type="text" id="regUsername" class="input-field" placeholder="ตั้งชื่อตัวเอง (Username)">
+      <input type="email" id="regEmail" class="input-field" placeholder="อีเมลของคุณ (สำหรับกู้คืนรหัสผ่าน)">
+      <input type="password" id="regPassword" class="input-field" placeholder="ตั้งรหัสผ่าน">
+      <button type="button" class="btn-main" onclick="handleUserRegister()">ยืนยันการสมัครสมาชิก</button>
+      
+      <span class="auth-toggle-link" style="color:var(--text-muted); margin-top:12px;" onclick="switchToLogin()">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</span>
+    </div>
+  </div>
+
+  <!-- Modal 3: รีเซ็ตรหัสผ่าน -->
+  <div class="app-modal" id="forgotModal">
+    <div class="app-modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:17px; font-weight:700; color:var(--c-deep);">รีเซ็ตรหัสผ่าน 🔑</h3>
+        <button type="button" class="drawer-close" onclick="closeForgotModal()">✕</button>
+      </div>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
+        กรอกชื่อผู้ใช้และอีเมลที่คุณลงทะเบียนไว้ เพื่อยืนยันตัวตนและตั้งรหัสผ่านใหม่ได้ทันทีค่ะ ♡
+      </p>
+      <input type="text" id="forgotUsername" class="input-field" placeholder="ชื่อผู้ใช้ของคุณ (Username)">
+      <input type="email" id="forgotEmail" class="input-field" placeholder="อีเมลที่ใช้สมัคร">
+      <input type="password" id="forgotNewPass" class="input-field" placeholder="ตั้งรหัสผ่านใหม่">
+      <button type="button" class="btn-main" onclick="handleDirectResetPassword()">บันทึกรหัสผ่านใหม่</button>
+      <span class="auth-toggle-link" style="color:var(--text-muted); margin-top:12px;" onclick="closeForgotModal(); openLoginModal();">ย้อนกลับไปหน้าเข้าสู่ระบบ</span>
+    </div>
+  </div>
+
+  <!-- Modal เลือกแพ็กเกจแอพ -->
+  <div class="app-modal" id="appDetailModal">
+    <div class="app-modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 id="modalAppName" style="font-size:17px; font-weight:700; color:var(--c-deep);">เลือกแพ็กเกจ</h3>
+        <button type="button" class="drawer-close" onclick="closeAppModal()">✕</button>
+      </div>
+      <div id="modalAppDesc" style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;"></div>
+      <div id="modalPlansList"></div>
+      <button type="button" class="btn-main" id="confirmBuyBtn" onclick="buySelectedPlan()">ยืนยันการสั่งซื้อ ♡</button>
+    </div>
+  </div>
+
+  <canvas id="qrCanvas" style="display:none;"></canvas>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCpAGDSy1NRgmLV_g7qJrCpwOhU9MrfQyY",
+      authDomain: "benefitie.firebaseapp.com",
+      projectId: "benefitie",
+      storageBucket: "benefitie.firebasestorage.app",
+      messagingSenderId: "270365672215",
+      appId: "1:270365672215:web:230d1491091e26ce83ed52"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const DB_SITE = "selrisapp_site";
+    const DB_APPS = "selrisapp_apps";
+    const DB_ORDERS = "selrisapp_orders";
+    const DB_USERS = "selrisapp_users";
+    const DB_SLIPS = "selrisapp_slips";
+
+    let currentUser = null;
+    let userData = { balance: 0, role: "user" };
+    let appsDataList = [];
+    let activeAppModalData = null;
+    let selectedPlanIndex = -1;
+    let userUnsub = null;
+
+    // เพลง
+    const music = document.getElementById('bgMusic');
+    function toggleMusic() {
+      if (music.paused) music.play().catch(() => {});
+      else music.pause();
+    }
+    ['touchstart', 'click'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        if (music.paused) music.play().catch(() => {});
+      }, { once: true });
+    });
+
+    // เมนูสามขีด
+    function toggleDrawer(open) {
+      document.getElementById('sideDrawer').classList.toggle('open', open);
+      document.getElementById('drawerOverlay').classList.toggle('open', open);
+    }
+
+    function switchNavTab(tabName) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-pill-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.drawer-nav-btn').forEach(b => b.classList.remove('active'));
+      
+      const targetView = document.getElementById(`tab-${tabName}`);
+      const targetPill = document.getElementById(`nav-btn-${tabName}`);
+      const targetDrawer = document.getElementById(`drawer-btn-${tabName}`);
+
+      if (targetView) targetView.classList.add('active');
+      if (targetPill) targetPill.classList.add('active');
+      if (targetDrawer) targetDrawer.classList.add('active');
+
+      toggleDrawer(false);
+    }
+
+    function openLoginModal() { document.getElementById('loginModal').classList.add('open'); toggleDrawer(false); }
+    function closeLoginModal() { document.getElementById('loginModal').classList.remove('open'); }
+
+    function openRegisterModal() { document.getElementById('registerModal').classList.add('open'); toggleDrawer(false); }
+    function closeRegisterModal() { document.getElementById('registerModal').classList.remove('open'); }
+
+    function openForgotModal() { closeLoginModal(); document.getElementById('forgotModal').classList.add('open'); }
+    function closeForgotModal() { document.getElementById('forgotModal').classList.remove('open'); }
+
+    function switchToRegister() { closeLoginModal(); openRegisterModal(); }
+    function switchToLogin() { closeRegisterModal(); openLoginModal(); }
+
+    // 1. สมัครสมาชิก
+    async function handleUserRegister() {
+      const username = document.getElementById('regUsername').value.trim();
+      const email = document.getElementById('regEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('regPassword').value.trim();
+
+      if (!username || !email || !pass) return alert('กรุณากรอกข้อมูลให้ครบทุกช่องนะคะ ♡');
+      if (username.length < 3) return alert('ชื่อผู้ใช้ต้องมีความยาวอย่างน้อย 3 ตัวอักษรค่ะ');
+      if (pass.length < 4) return alert('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษรค่ะ');
+      if (!email.includes('@')) return alert('กรุณากรอกรูปแบบอีเมลให้ถูกต้องนะคะ');
+
+      const userDocRef = db.collection(DB_USERS).doc(username);
+
+      try {
+        const docSnap = await userDocRef.get();
+        if (docSnap.exists) {
+          return alert('ชื่อผู้ใช้นี้มีคนใช้แล้ว กรุณาตั้งชื่ออื่นนะคะ ♡');
+        }
+
+        await userDocRef.set({
+          username: username,
+          email: email,
+          password: pass,
+          balance: 0,
+          role: "user", // ยศเริ่มต้นคือลูกค้าทั่วไป
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        const userObj = { username: username, email: email, docId: username };
+        localStorage.setItem('selrisapp_active_user', JSON.stringify(userObj));
+        onUserLoggedIn(userObj);
+
+        alert('สมัครสมาชิกสำเร็จเรียบร้อยแล้วค่ะ! ยินดีต้อนรับนะคะ ♡');
+        closeRegisterModal();
+      } catch (err) {
+        alert('เกิดข้อผิดพลาดในการสมัคร: ' + err.message);
+      }
+    }
+
+    // 2. เข้าสู่ระบบ
+    async function handleUserLogin() {
+      const username = document.getElementById('loginUsername').value.trim();
+      const pass = document.getElementById('loginPassword').value.trim();
+
+      if (!username || !pass) return alert('กรุณากรอกชื่อผู้ใช้และรหัสผ่านนะคะ ♡');
+
+      try {
+        const docSnap = await db.collection(DB_USERS).doc(username).get();
+        if (!docSnap.exists) {
+          return alert('ไม่พบชื่อผู้ใช้นี้ในระบบ กรุณาสมัครสมาชิกก่อนนะคะ ♡');
+        }
+
+        const data = docSnap.data();
+        if (data.password !== pass) {
+          return alert('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้งค่ะ');
+        }
+
+        const userObj = { username: username, email: data.email, docId: username };
+        localStorage.setItem('selrisapp_active_user', JSON.stringify(userObj));
+        onUserLoggedIn(userObj);
+
+        alert(`ยินดีต้อนรับคุณ ${username} เข้าสู่ระบบสำเร็จแล้วค่ะ ♡`);
+        closeLoginModal();
+      } catch (err) {
+        alert('เข้าสู่ระบบไม่สำเร็จ: ' + err.message);
+      }
+    }
+
+    // 3. รีเซ็ตรหัสผ่านตรงผ่าน Firestore
+    async function handleDirectResetPassword() {
+      const username = document.getElementById('forgotUsername').value.trim();
+      const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+      const newPass = document.getElementById('forgotNewPass').value.trim();
+
+      if (!username || !email || !newPass) return alert('กรุณากรอกข้อมูลให้ครบถ้วนทุกช่องนะคะ ♡');
+      if (newPass.length < 4) return alert('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษรค่ะ');
+
+      try {
+        const userDocRef = db.collection(DB_USERS).doc(username);
+        const docSnap = await userDocRef.get();
+
+        if (!docSnap.exists) return alert('ไม่พบชื่อผู้ใช้นี้ในระบบค่ะ');
+
+        const data = docSnap.data();
+        if (data.email.toLowerCase() !== email) {
+          return alert('อีเมลไม่ตรงกับที่ลงทะเบียนไว้กับชื่อผู้ใช้นี้ค่ะ');
+        }
+
+        await userDocRef.update({ password: newPass });
+        alert('เปลี่ยนรหัสผ่านใหม่เรียบร้อยแล้วค่ะ! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้ทันที ♡');
+        closeForgotModal();
+        openLoginModal();
+      } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+      }
+    }
+
+    function checkStoredUser() {
+      const savedUserStr = localStorage.getItem('selrisapp_active_user');
+      if (savedUserStr) {
+        try {
+          const userObj = JSON.parse(savedUserStr);
+          onUserLoggedIn(userObj);
+        } catch (e) {
+          onUserLoggedOut();
+        }
+      } else {
+        onUserLoggedOut();
+      }
+    }
+
+    function onUserLoggedIn(user) {
+      currentUser = user;
+      document.getElementById('drawerUserUsername').textContent = user.username;
+      document.getElementById('drawerUserEmail').textContent = user.email || '';
+      
+      const authBtn = document.getElementById('drawerAuthBtn');
+      authBtn.textContent = '🚪 ออกจากระบบ';
+      authBtn.onclick = logoutUser;
+      document.getElementById('drawerRegisterBtn').style.display = 'none';
+
+      if (userUnsub) userUnsub();
+      userUnsub = db.collection(DB_USERS).doc(user.docId).onSnapshot(doc => {
+        if (doc.exists) {
+          userData = doc.data();
+          document.getElementById('drawerUserBalance').textContent = `฿${(userData.balance || 0).toFixed(2)}`;
+
+          // อัปเดตยศตัวแทน
+          const roleBadgeEl = document.getElementById('drawerUserRole');
+          if (userData.role === 'agent') {
+            roleBadgeEl.innerHTML = `<span class="role-badge role-agent">👑 ตัวแทนจำหน่าย (ราคาส่ง)</span>`;
+          } else {
+            roleBadgeEl.innerHTML = `<span class="role-badge role-user">สมาชิกทั่วไป</span>`;
+          }
+          // เรนเดอร์กล่องสินค้าใหม่ตามยศราคา
+          renderAppsGrid();
+        }
+      });
+      loadOrderHistory(user.username);
+    }
+
+    function onUserLoggedOut() {
+      currentUser = null;
+      userData = { balance: 0, role: "user" };
+      if (userUnsub) userUnsub();
+      document.getElementById('drawerUserUsername').textContent = 'ยังไม่ได้เข้าสู่ระบบ';
+      document.getElementById('drawerUserRole').innerHTML = '';
+      document.getElementById('drawerUserEmail').textContent = '';
+      document.getElementById('drawerUserBalance').textContent = '฿0.00';
+      
+      const authBtn = document.getElementById('drawerAuthBtn');
+      authBtn.textContent = '🔑 เข้าสู่ระบบ';
+      authBtn.onclick = openLoginModal;
+      document.getElementById('drawerRegisterBtn').style.display = 'flex';
+      
+      document.getElementById('orderHistoryList').innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px; padding:20px;">กรุณาเข้าสู่ระบบก่อนสั่งซื้อนะคะ ♡</p>';
+      renderAppsGrid();
+    }
+
+    function logoutUser() {
+      localStorage.removeItem('selrisapp_active_user');
+      onUserLoggedOut();
+      toggleDrawer(false);
+      alert('ออกจากระบบเรียบร้อยแล้วค่ะ ♡');
+    }
+
+    checkStoredUser();
+
+    // ดึงข้อมูลร้าน
+    db.collection(DB_SITE).doc("config").onSnapshot(doc => {
+      if (doc.exists) {
+        const d = doc.data();
+        if (d.shopName) document.getElementById('shopNameText').textContent = d.shopName;
+        if (d.shopBio) document.getElementById('shopBioText').textContent = d.shopBio;
+        if (d.bannerImg) document.getElementById('bannerImg').src = d.bannerImg;
+        if (d.profileImg) document.getElementById('profileImg').src = d.profileImg;
+        if (d.lineOaUrl) document.getElementById('lineOaLink').href = d.lineOaUrl;
+        if (d.musicUrl && music.src !== d.musicUrl) music.src = d.musicUrl;
+      }
+    });
+
+    // ดึงแอพพรีเมี่ยมทั้งหมด
+    db.collection(DB_APPS).orderBy("order", "asc").onSnapshot(snap => {
+      appsDataList = [];
+      snap.forEach(doc => {
+        appsDataList.push({ id: doc.id, ...doc.data() });
+      });
+      renderAppsGrid();
+    });
+
+    function renderAppsGrid() {
+      const grid = document.getElementById('appsGrid');
+      grid.innerHTML = '';
+      appsDataList.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'app-box-card';
+        card.onclick = () => openAppModal(item);
+        card.innerHTML = `
+          <img src="${item.thumb || 'https://files.catbox.moe/kszmeo.jpeg'}" class="app-box-thumb" alt="${item.name}">
+          <div class="app-box-name">${item.name}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // เปิด Modal ซื้อแอพ พร้อมตรวจยศแสดงราคา
+    function openAppModal(app) {
+      activeAppModalData = app;
+      selectedPlanIndex = -1;
+      document.getElementById('modalAppName').textContent = app.name;
+      document.getElementById('modalAppDesc').textContent = app.desc || '';
+      
+      const list = document.getElementById('modalPlansList');
+      list.innerHTML = '';
+
+      const isAgent = (userData && userData.role === 'agent');
+
+      (app.plans || []).forEach((p, idx) => {
+        // ถ้ายศเป็นตัวแทน ให้ใช้ราคา agentPrice (ถ้าไม่มีให้ fallback เป็นราคาปกติ)
+        const finalPrice = isAgent && p.agentPrice ? p.agentPrice : p.price;
+        const priceLabel = isAgent && p.agentPrice ? `฿${finalPrice} <span style="font-size:10.5px; color:var(--agent-gold); font-weight:700;">[ราคาส่งตัวแทน ♡]</span>` : `฿${finalPrice}`;
+
+        const div = document.createElement('div');
+        div.className = 'plan-option-card';
+        div.id = `plan-card-${idx}`;
+        div.onclick = () => {
+          selectedPlanIndex = idx;
+          document.querySelectorAll('.plan-option-card').forEach(c => c.classList.remove('selected'));
+          div.classList.add('selected');
+        };
+        div.innerHTML = `
+          <div>
+            <div style="font-weight:700; font-size:13.5px;">${p.name}</div>
+            <div style="font-size:11.5px; color:var(--text-muted);">สต็อกพร้อมส่ง: ${(p.stock || []).length} ชิ้น</div>
+          </div>
+          <div style="font-weight:700; color:var(--c-deep); font-size:14px; text-align:right;">${priceLabel}</div>
+        `;
+        list.appendChild(div);
+      });
+
+      document.getElementById('appDetailModal').classList.add('open');
+    }
+    function closeAppModal() { document.getElementById('appDetailModal').classList.remove('open'); }
+
+    // สั่งซื้อแอพ (ตัดเงินตามราคายศของลูกค้ารายนั้นจริง)
+    async function buySelectedPlan() {
+      if (!currentUser) {
+        alert('กรุณาเข้าสู่ระบบก่อนสั่งซื้อนะคะ ♡');
+        openLoginModal();
+        return;
+      }
+      if (selectedPlanIndex < 0) return alert('กรุณาเลือกแพ็กเกจที่ต้องการสั่งซื้อค่ะ');
+
+      const app = activeAppModalData;
+      const plan = app.plans[selectedPlanIndex];
+
+      const isAgent = (userData && userData.role === 'agent');
+      const finalPrice = isAgent && plan.agentPrice ? plan.agentPrice : plan.price;
+
+      if ((userData.balance || 0) < finalPrice) {
+        alert(`ยอดเงินคงเหลือไม่พอค่ะ (ต้องการ ฿${finalPrice} ขาดอีก ฿${(finalPrice - (userData.balance || 0)).toFixed(2)})\nกรุณาไปที่แท็บ payment เพื่อเติมเงินก่อนนะคะ ♡`);
+        switchNavTab('topup');
+        closeAppModal();
+        return;
+      }
+
+      if (!plan.stock || plan.stock.length === 0) {
+        alert('ขออภัยค่ะ สินค้าแพ็กเกจนี้หมดสต็อกชั่วคราว');
+        return;
+      }
+
+      const btn = document.getElementById('confirmBuyBtn');
+      btn.disabled = true;
+      btn.textContent = 'กำลังทำรายการ...';
+
+      const appDocRef = db.collection(DB_APPS).doc(app.id);
+      const userDocRef = db.collection(DB_USERS).doc(currentUser.docId);
+
+      try {
+        await db.runTransaction(async t => {
+          const appDoc = await t.get(appDocRef);
+          const uDoc = await t.get(userDocRef);
+
+          const curPlans = appDoc.data().plans;
+          const targetPlan = curPlans[selectedPlanIndex];
+          const curBal = uDoc.data().balance || 0;
+          const userRole = uDoc.data().role || 'user';
+
+          const actualPrice = (userRole === 'agent' && targetPlan.agentPrice) ? targetPlan.agentPrice : targetPlan.price;
+
+          if (curBal < actualPrice) throw new Error("ยอดเงินไม่เพียงพอ");
+          if (!targetPlan.stock || targetPlan.stock.length === 0) throw new Error("สินค้าหมดสต็อก");
+
+          const deliveredCode = targetPlan.stock.shift();
+
+          t.update(userDocRef, { balance: curBal - actualPrice });
+          t.update(appDocRef, { plans: curPlans });
+
+          const newOrderRef = db.collection(DB_ORDERS).doc();
+          t.set(newOrderRef, {
+            username: currentUser.username,
+            appName: app.name,
+            planName: targetPlan.name,
+            price: actualPrice,
+            isAgentPrice: (userRole === 'agent' && targetPlan.agentPrice),
+            code: deliveredCode,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+
+        alert(`สั่งซื้อสำเร็จแล้วค่ะ ♡\nสามารถดูรหัสแอพได้ทันทีที่แท็บ 'ประวัติการสั่งซื้อ'`);
+        closeAppModal();
+        switchNavTab('history');
+      } catch (err) {
+        alert("ทำรายการไม่สำเร็จ: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'ยืนยันการสั่งซื้อ ♡';
+      }
+    }
+
+    // ประวัติการสั่งซื้อ
+    function loadOrderHistory(username) {
+      db.collection(DB_ORDERS).where("username", "==", username).orderBy("createdAt", "desc").onSnapshot(snap => {
+        const box = document.getElementById('orderHistoryList');
+        if (snap.empty) {
+          box.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px; padding:20px;">ยังไม่มีประวัติการสั่งซื้อ อุดหนุนกันก่อนน้าา ♡</p>';
+          return;
+        }
+        let html = '';
+        snap.forEach(doc => {
+          const d = doc.data();
+          const tag = d.isAgentPrice ? ' <span style="font-size:11px; color:var(--agent-gold);">[ราคาส่ง]</span>' : '';
+          html += `
+            <div class="order-history-card">
+              <div class="order-header-row">
+                <span style="color:var(--c-deep);">${d.appName} (${d.planName})${tag}</span>
+                <span>฿${d.price}</span>
+              </div>
+              <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px;">รหัสเข้าใช้งานของลูกค้า:</div>
+              <div class="order-code-box">${d.code}</div>
+            </div>
+          `;
+        });
+        box.innerHTML = html;
+      });
+    }
+
+    // ตรวจสลิปยอดเงินออโต้ 100%
+    function parseSlipAmountFromQR(qrData) {
+      if (!qrData || typeof qrData !== 'string') return null;
+
+      let index = 0;
+      while (index < qrData.length - 4) {
+        const tag = qrData.substr(index, 2);
+        const length = parseInt(qrData.substr(index + 2, 2), 10);
+        if (isNaN(length)) break;
+        
+        const value = qrData.substr(index + 4, length);
+        if (tag === '54') {
+          const parsed = parseFloat(value);
+          if (!isNaN(parsed) && parsed > 0) return parsed;
+        }
+        index += 4 + length;
+      }
+
+      const regexPatterns = [
+        /[Aa]mount[:=]\s*([0-9]+(?:\.[0-9]{1,2})?)/,
+        /54\d{2}([0-9]+(?:\.[0-9]{1,2})?)/,
+        /([0-9]+\.[0-9]{2})\s*THB/i
+      ];
+
+      for (const pattern of regexPatterns) {
+        const match = qrData.match(pattern);
+        if (match && match[1]) {
+          const parsed = parseFloat(match[1]);
+          if (!isNaN(parsed) && parsed > 0) return parsed;
+        }
+      }
+
+      return null;
+    }
+
+    async function handleSlipUpload(event) {
+      if (!currentUser) {
+        alert('กรุณาเข้าสู่ระบบก่อนแนบสลิปเติมเงินนะคะ ♡');
+        openLoginModal();
+        return;
+      }
+
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async e => {
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.getElementById('qrCanvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (!code || !code.data) {
+            alert('ไม่พบ QR Code ในสลิป กรุณาใช้สลิปโอนเงินที่มี QR Code ชัดเจนนะคะ ♡');
+            return;
+          }
+
+          const qrPayload = code.data;
+          const slipRefHash = btoa(encodeURIComponent(qrPayload)).slice(0, 36);
+
+          const slipDoc = await db.collection(DB_SLIPS).doc(slipRefHash).get();
+          if (slipDoc.exists) {
+            alert('สลิปนี้เคยใช้งานเติมเงินไปแล้ว ไม่สามารถใช้ซ้ำได้ค่ะ ❌');
+            return;
+          }
+
+          const amount = parseSlipAmountFromQR(qrPayload);
+
+          if (!amount || isNaN(amount) || amount <= 0) {
+            alert('ตรวจพบ QR สลิปถูกต้อง แต่ไม่สามารถอ่านยอดเงินอัตโนมัติได้ กรุณาใช้ภาพสลิปต้นฉบับที่ไม่ผ่านการครอปตัดนะคะ');
+            return;
+          }
+
+          try {
+            await db.runTransaction(async t => {
+              const uRef = db.collection(DB_USERS).doc(currentUser.docId);
+              const uDoc = await t.get(uRef);
+              const curBal = (uDoc.data() && uDoc.data().balance) || 0;
+
+              t.update(uRef, { balance: curBal + amount });
+              t.set(db.collection(DB_SLIPS).doc(slipRefHash), {
+                username: currentUser.username,
+                amount: amount,
+                usedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            });
+
+            alert(`🎉 ตรวจสลิปสำเร็จเรียบร้อยแล้วค่ะ!\nระบบเติมเงินจำนวน ฿${amount.toFixed(2)} เข้ากระเป๋าของคุณทันที ♡`);
+          } catch (err) {
+            alert('เกิดข้อผิดพลาดในการตรวจสอบสลิป: ' + err.message);
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function copyText(str, msg) {
+      navigator.clipboard.writeText(str).then(() => alert(msg));
+    }
+
+    // รูปลอย
+    const floatBox = document.getElementById('floatContainer');
+    setInterval(() => {
+      const el = document.createElement('img');
+      el.src = 'https://files.catbox.moe/4gpyl1.png';
+      el.className = 'float-item';
+      el.style.left = (Math.random() * 90) + 'vw';
+      el.style.animationDuration = (8 + Math.random() * 6) + 's';
+      floatBox.appendChild(el);
+      setTimeout(() => el.remove(), 14000);
+    }, 1600);
+  </script>
+</body>
+</html>
