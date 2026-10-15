@@ -25,6 +25,8 @@
       --agent-gold: #f59e0b;
       --agent-bg: #fffbeb;
       --agent-border: #fde68a;
+      --admin-badge-bg: #eff6ff;
+      --admin-badge-color: #2563eb;
       --text-main: #4d3d44;
       --text-muted: #8c737e;
       --glow-soft: 0 10px 28px rgba(217, 184, 197, 0.35);
@@ -58,7 +60,7 @@
       z-index: 2;
     }
 
-    /* กล่องแถบด้านบน */
+    /* แถบด้านบน */
     .top-header {
       display: flex;
       align-items: center;
@@ -185,6 +187,7 @@
     }
     .role-user { background: var(--c-soft); color: var(--c-deep); border: 1px solid var(--c-border); }
     .role-agent { background: var(--agent-bg); color: var(--agent-gold); border: 1px solid var(--agent-border); }
+    .role-admin { background: var(--admin-badge-bg); color: var(--admin-badge-color); border: 1px solid #bfdbfe; }
     .user-wallet-val {
       font-size: 18px;
       font-weight: 700;
@@ -323,7 +326,7 @@
     }
     .line-oa-btn:active { transform: scale(0.97); }
 
-    /* หน้า 2: ตารางกล่องแอพพรีเมียม */
+    /* หน้า 2: ตารางกล่องแอพ */
     .apps-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -354,7 +357,7 @@
       padding: 10px 6px 12px;
     }
 
-    /* Modal เลือกแพ็กเกจแอพ */
+    /* Modal เลือกแพ็กเกจ */
     .app-modal {
       position: fixed;
       inset: 0;
@@ -504,7 +507,7 @@
 </head>
 <body>
 
-  <!-- เพลงประกอบพื้นหลัง -->
+  <!-- เพลง -->
   <audio id="bgMusic" loop preload="auto" src="https://file.garden/asG8Gt-rqWIpi3II/%E0%B8%A2%E0%B8%B4%E0%B8%99%E0%B8%94%E0%B8%B5%20Ost.%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%B2%E0%B8%A5%E0%B8%94%E0%B8%B2%20sarah%20salola%20Official%20MV.mp3"></audio>
 
   <!-- รูปลอย -->
@@ -518,7 +521,7 @@
       <button type="button" class="drawer-close" onclick="toggleDrawer(false)">✕</button>
     </div>
 
-    <!-- บัตรโปรไฟล์สมาชิก พร้อมยศตัวแทน -->
+    <!-- บัตรโปรไฟล์สมาชิก พร้อมยศแอดมิน/ตัวแทน -->
     <div class="user-profile-badge" id="drawerUserBadge">
       <div id="drawerUserUsername" style="font-weight:700; font-size:14px; color:var(--text-main);">ยังไม่ได้เข้าสู่ระบบ</div>
       <div id="drawerUserRole"></div>
@@ -572,7 +575,7 @@
       </div>
     </div>
 
-    <!-- 2. แท็บ apppremium (แสดงราคาส่งเมื่อเป็นตัวแทน) -->
+    <!-- 2. แท็บ apppremium -->
     <div class="tab-view" id="tab-apps">
       <div class="glass-card" style="padding-bottom:20px;">
         <h2 style="font-size:16px; font-weight:700; color:var(--c-deep); text-align:center; margin-bottom:14px;">
@@ -582,7 +585,7 @@
       </div>
     </div>
 
-    <!-- 3. แท็บ payment (เติมเงิน & สแกนสลิป) -->
+    <!-- 3. แท็บ payment (เติมเงิน & แนบสลิป) -->
     <div class="tab-view" id="tab-topup">
       <div class="glass-card">
         <h2 style="font-size:16px; font-weight:700; color:var(--c-deep); text-align:center; margin-bottom:12px;">
@@ -630,7 +633,7 @@ k-plus𓈒   ཾ     ݂     𓈒
         <!-- แนบสลิปตรวจอัตโนมัติ -->
         <div class="slip-uploader-box" onclick="document.getElementById('slipFileInput').click()">
           <span style="font-size:28px;">🧾</span>
-          <div style="font-weight:700; color:var(--c-deep); margin-top:4px;">แนบสลิปโอนเงิน (ตรวจยอดเงินอัตโนมัติ 100%)</div>
+          <div style="font-weight:700; color:var(--c-deep); margin-top:4px;">แนบสลิปโอนเงิน (ตรวจยอดเงินอัตโนมัติ)</div>
           <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">ระบบจะสแกน QR Code อ่านยอดเงินที่โอนจริง และเติมเข้าสู่กระเป๋าของคุณทันที</div>
           <input type="file" id="slipFileInput" accept="image/*" style="display:none;" onchange="handleSlipUpload(event)">
         </div>
@@ -741,6 +744,7 @@ k-plus𓈒   ཾ     ݂     𓈒
     let activeAppModalData = null;
     let selectedPlanIndex = -1;
     let userUnsub = null;
+    let orderUnsub = null;
 
     // เพลง
     const music = document.getElementById('bgMusic');
@@ -773,6 +777,10 @@ k-plus𓈒   ཾ     ݂     𓈒
       if (targetPill) targetPill.classList.add('active');
       if (targetDrawer) targetDrawer.classList.add('active');
 
+      if (tabName === 'history' && currentUser) {
+        loadOrderHistory(currentUser.username);
+      }
+
       toggleDrawer(false);
     }
 
@@ -788,7 +796,7 @@ k-plus𓈒   ཾ     ݂     𓈒
     function switchToRegister() { closeLoginModal(); openRegisterModal(); }
     function switchToLogin() { closeRegisterModal(); openLoginModal(); }
 
-    // 1. สมัครสมาชิก
+    // สมัครสมาชิก
     async function handleUserRegister() {
       const username = document.getElementById('regUsername').value.trim();
       const email = document.getElementById('regEmail').value.trim().toLowerCase();
@@ -812,7 +820,7 @@ k-plus𓈒   ཾ     ݂     𓈒
           email: email,
           password: pass,
           balance: 0,
-          role: "user", // ยศเริ่มต้นคือลูกค้าทั่วไป
+          role: "user",
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -827,7 +835,7 @@ k-plus𓈒   ཾ     ݂     𓈒
       }
     }
 
-    // 2. เข้าสู่ระบบ
+    // เข้าสู่ระบบ (รองรับ adminpun ด้วย)
     async function handleUserLogin() {
       const username = document.getElementById('loginUsername').value.trim();
       const pass = document.getElementById('loginPassword').value.trim();
@@ -856,7 +864,7 @@ k-plus𓈒   ཾ     ݂     𓈒
       }
     }
 
-    // 3. รีเซ็ตรหัสผ่านตรงผ่าน Firestore
+    // รีเซ็ตรหัสผ่านตรงผ่าน Firestore
     async function handleDirectResetPassword() {
       const username = document.getElementById('forgotUsername').value.trim();
       const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
@@ -915,14 +923,15 @@ k-plus𓈒   ཾ     ݂     𓈒
           userData = doc.data();
           document.getElementById('drawerUserBalance').textContent = `฿${(userData.balance || 0).toFixed(2)}`;
 
-          // อัปเดตยศตัวแทน
+          // ป้ายยศ
           const roleBadgeEl = document.getElementById('drawerUserRole');
-          if (userData.role === 'agent') {
+          if (userData.role === 'admin' || user.username === 'adminpun') {
+            roleBadgeEl.innerHTML = `<span class="role-badge role-admin">👑 แอดมิน (Admin เจ้าของร้าน)</span>`;
+          } else if (userData.role === 'agent') {
             roleBadgeEl.innerHTML = `<span class="role-badge role-agent">👑 ตัวแทนจำหน่าย (ราคาส่ง)</span>`;
           } else {
             roleBadgeEl.innerHTML = `<span class="role-badge role-user">สมาชิกทั่วไป</span>`;
           }
-          // เรนเดอร์กล่องสินค้าใหม่ตามยศราคา
           renderAppsGrid();
         }
       });
@@ -933,6 +942,7 @@ k-plus𓈒   ཾ     ݂     𓈒
       currentUser = null;
       userData = { balance: 0, role: "user" };
       if (userUnsub) userUnsub();
+      if (orderUnsub) orderUnsub();
       document.getElementById('drawerUserUsername').textContent = 'ยังไม่ได้เข้าสู่ระบบ';
       document.getElementById('drawerUserRole').innerHTML = '';
       document.getElementById('drawerUserEmail').textContent = '';
@@ -993,7 +1003,6 @@ k-plus𓈒   ཾ     ݂     𓈒
       });
     }
 
-    // เปิด Modal ซื้อแอพ พร้อมตรวจยศแสดงราคา
     function openAppModal(app) {
       activeAppModalData = app;
       selectedPlanIndex = -1;
@@ -1003,12 +1012,12 @@ k-plus𓈒   ཾ     ݂     𓈒
       const list = document.getElementById('modalPlansList');
       list.innerHTML = '';
 
-      const isAgent = (userData && userData.role === 'agent');
+      // แอดมินและตัวแทนจะได้ราคาส่ง
+      const isPrivilege = (userData && (userData.role === 'agent' || userData.role === 'admin'));
 
       (app.plans || []).forEach((p, idx) => {
-        // ถ้ายศเป็นตัวแทน ให้ใช้ราคา agentPrice (ถ้าไม่มีให้ fallback เป็นราคาปกติ)
-        const finalPrice = isAgent && p.agentPrice ? p.agentPrice : p.price;
-        const priceLabel = isAgent && p.agentPrice ? `฿${finalPrice} <span style="font-size:10.5px; color:var(--agent-gold); font-weight:700;">[ราคาส่งตัวแทน ♡]</span>` : `฿${finalPrice}`;
+        const finalPrice = isPrivilege && p.agentPrice ? p.agentPrice : p.price;
+        const priceLabel = isPrivilege && p.agentPrice ? `฿${finalPrice} <span style="font-size:10.5px; color:var(--agent-gold); font-weight:700;">[ราคาส่งตัวแทน ♡]</span>` : `฿${finalPrice}`;
 
         const div = document.createElement('div');
         div.className = 'plan-option-card';
@@ -1032,7 +1041,7 @@ k-plus𓈒   ཾ     ݂     𓈒
     }
     function closeAppModal() { document.getElementById('appDetailModal').classList.remove('open'); }
 
-    // สั่งซื้อแอพ (ตัดเงินตามราคายศของลูกค้ารายนั้นจริง)
+    // สั่งซื้อแอพ
     async function buySelectedPlan() {
       if (!currentUser) {
         alert('กรุณาเข้าสู่ระบบก่อนสั่งซื้อนะคะ ♡');
@@ -1044,8 +1053,8 @@ k-plus𓈒   ཾ     ݂     𓈒
       const app = activeAppModalData;
       const plan = app.plans[selectedPlanIndex];
 
-      const isAgent = (userData && userData.role === 'agent');
-      const finalPrice = isAgent && plan.agentPrice ? plan.agentPrice : plan.price;
+      const isPrivilege = (userData && (userData.role === 'agent' || userData.role === 'admin'));
+      const finalPrice = isPrivilege && plan.agentPrice ? plan.agentPrice : plan.price;
 
       if ((userData.balance || 0) < finalPrice) {
         alert(`ยอดเงินคงเหลือไม่พอค่ะ (ต้องการ ฿${finalPrice} ขาดอีก ฿${(finalPrice - (userData.balance || 0)).toFixed(2)})\nกรุณาไปที่แท็บ payment เพื่อเติมเงินก่อนนะคะ ♡`);
@@ -1076,7 +1085,7 @@ k-plus𓈒   ཾ     ݂     𓈒
           const curBal = uDoc.data().balance || 0;
           const userRole = uDoc.data().role || 'user';
 
-          const actualPrice = (userRole === 'agent' && targetPlan.agentPrice) ? targetPlan.agentPrice : targetPlan.price;
+          const actualPrice = ((userRole === 'agent' || userRole === 'admin') && targetPlan.agentPrice) ? targetPlan.agentPrice : targetPlan.price;
 
           if (curBal < actualPrice) throw new Error("ยอดเงินไม่เพียงพอ");
           if (!targetPlan.stock || targetPlan.stock.length === 0) throw new Error("สินค้าหมดสต็อก");
@@ -1092,7 +1101,7 @@ k-plus𓈒   ཾ     ݂     𓈒
             appName: app.name,
             planName: targetPlan.name,
             price: actualPrice,
-            isAgentPrice: (userRole === 'agent' && targetPlan.agentPrice),
+            isAgentPrice: ((userRole === 'agent' || userRole === 'admin') && targetPlan.agentPrice),
             code: deliveredCode,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
@@ -1111,15 +1120,31 @@ k-plus𓈒   ཾ     ݂     𓈒
 
     // ประวัติการสั่งซื้อ
     function loadOrderHistory(username) {
-      db.collection(DB_ORDERS).where("username", "==", username).orderBy("createdAt", "desc").onSnapshot(snap => {
-        const box = document.getElementById('orderHistoryList');
+      if (orderUnsub) orderUnsub();
+      
+      const box = document.getElementById('orderHistoryList');
+      if (!username) {
+        box.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px; padding:20px;">กรุณาเข้าสู่ระบบก่อนสั่งซื้อนะคะ ♡</p>';
+        return;
+      }
+
+      orderUnsub = db.collection(DB_ORDERS).where("username", "==", username).onSnapshot(snap => {
         if (snap.empty) {
           box.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px; padding:20px;">ยังไม่มีประวัติการสั่งซื้อ อุดหนุนกันก่อนน้าา ♡</p>';
           return;
         }
+
+        const orders = [];
+        snap.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
+
+        orders.sort((a, b) => {
+          const tA = a.createdAt ? (a.createdAt.toMillis ? a.createdAt.toMillis() : a.createdAt.seconds * 1000) : 0;
+          const tB = b.createdAt ? (b.createdAt.toMillis ? b.createdAt.toMillis() : b.createdAt.seconds * 1000) : 0;
+          return tB - tA;
+        });
+
         let html = '';
-        snap.forEach(doc => {
-          const d = doc.data();
+        orders.forEach(d => {
           const tag = d.isAgentPrice ? ' <span style="font-size:11px; color:var(--agent-gold);">[ราคาส่ง]</span>' : '';
           html += `
             <div class="order-history-card">
@@ -1133,10 +1158,12 @@ k-plus𓈒   ཾ     ݂     𓈒
           `;
         });
         box.innerHTML = html;
+      }, err => {
+        console.error("Order load error:", err);
       });
     }
 
-    // ตรวจสลิปยอดเงินออโต้ 100%
+    // ตรวจสลิปยอดเงิน
     function parseSlipAmountFromQR(qrData) {
       if (!qrData || typeof qrData !== 'string') return null;
 
@@ -1207,11 +1234,15 @@ k-plus𓈒   ཾ     ݂     𓈒
             return;
           }
 
-          const amount = parseSlipAmountFromQR(qrPayload);
+          let amount = parseSlipAmountFromQR(qrPayload);
 
           if (!amount || isNaN(amount) || amount <= 0) {
-            alert('ตรวจพบ QR สลิปถูกต้อง แต่ไม่สามารถอ่านยอดเงินอัตโนมัติได้ กรุณาใช้ภาพสลิปต้นฉบับที่ไม่ผ่านการครอปตัดนะคะ');
-            return;
+            const promptAmt = prompt("ตรวจพบ QR สลิปถูกต้องเรียบร้อยค่ะ! กรุณาระบุยอดเงินที่โอนตามสลิป (บาท):");
+            amount = parseFloat(promptAmt);
+          }
+
+          if (!amount || isNaN(amount) || amount <= 0) {
+            return alert('ยอดเงินไม่ถูกต้อง ยกเลิกการทำรายการค่ะ');
           }
 
           try {
