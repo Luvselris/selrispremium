@@ -78,7 +78,6 @@
       background: #fff; color: var(--c-deep); border: 1.5px solid var(--c-border); box-shadow: none;
     }
 
-    /* ตารางตัวแทน */
     .agent-item-card {
       background: #ffffff; border: 1px solid var(--c-border); border-radius: 14px;
       padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
@@ -98,7 +97,7 @@
     </div>
     <div class="field-group">
       <label class="field-label">รหัสผ่าน</label>
-      <input type="password" id="loginPassword" class="input-box" placeholder="291153">
+      <input type="password" id="loginPassword" class="input-box" placeholder="@punpunz9">
     </div>
     <button type="button" class="btn" onclick="handleLogin()">เข้าสู่ระบบแอดมิน ♡</button>
   </div>
@@ -107,9 +106,10 @@
   <div id="dashboardBox" class="hidden">
     <div class="nav-tabs">
       <button type="button" class="tab-btn active" onclick="switchAdminTab('general')">1. ร้านค้า</button>
-      <button type="button" class="tab-btn" onclick="switchAdminTab('apps')">2. แอพ & 2 ราคา</button>
-      <button type="button" class="tab-btn" onclick="switchAdminTab('agents')">3. ยศตัวแทน</button>
-      <button type="button" class="tab-btn" onclick="switchAdminTab('account')">4. รหัสแอดมิน</button>
+      <button type="button" class="tab-btn" onclick="switchAdminTab('apps')">2. แอพ & สต็อก</button>
+      <button type="button" class="tab-btn" onclick="switchAdminTab('wallet')">3. เติมเงินแอดมิน</button>
+      <button type="button" class="tab-btn" onclick="switchAdminTab('agents')">4. ยศตัวแทน</button>
+      <button type="button" class="tab-btn" onclick="switchAdminTab('account')">5. รหัสแอดมิน</button>
     </div>
 
     <!-- แถบ 1: ข้อมูลหน้าร้าน -->
@@ -144,7 +144,7 @@
       </div>
     </div>
 
-    <!-- แถบ 2: แอพ & ตั้ง 2 ราคา (ราคาปลีก & ราคาส่งตัวแทน) -->
+    <!-- แถบ 2: แอพ & 2 ราคา -->
     <div class="tab-content" id="tab-apps">
       <div class="card">
         <div class="title">📱 จัดการแอพ, สต็อก & ราคาส่งตัวแทน</div>
@@ -154,7 +154,34 @@
       </div>
     </div>
 
-    <!-- แถบ 3: จัดการยศตัวแทนจำหน่าย -->
+    <!-- แถบ 3: เติมเงินแอดมิน / ลูกค้า -->
+    <div class="tab-content" id="tab-wallet">
+      <div class="card">
+        <div class="title">💰 เติมเครดิตแอดมิน & ลูกค้า</div>
+        
+        <!-- กล่องลัดเติมเงินเข้า adminpun -->
+        <div style="background:#fdf2f8; border:1.5px dashed var(--c-deep); border-radius:16px; padding:14px; margin-bottom:16px;">
+          <div style="font-weight:700; color:var(--c-deep); font-size:14px;">👑 เติมเครดิตด่วนเข้าบัญชีแอดมิน (adminpun)</div>
+          <div style="font-size:12px; color:var(--text); margin:4px 0 10px;">ยอดเงินจะขึ้นที่หน้าเว็บหลักทันที สำหรับใช้กดซื้อสินค้าทดสอบ</div>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="quickAdminAmount" class="input-box" placeholder="ระบุยอดเงิน เช่น 9999" value="9999">
+            <button type="button" class="btn" style="width:auto; white-space:nowrap; margin-top:0;" onclick="quickTopupAdmin()">⚡ เติมเข้าแอดมิน</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">ชื่อผู้ใช้ (Username) ที่ต้องการเติมเงิน</label>
+          <input type="text" id="targetUsername" class="input-box" placeholder="กรอก username">
+        </div>
+        <div class="field-group">
+          <label class="field-label">จำนวนเงินที่ต้องการเติม (บาท)</label>
+          <input type="number" id="addBalanceAmount" class="input-box" placeholder="เช่น 500 หรือ 1000">
+        </div>
+        <button type="button" class="btn" onclick="adminAddBalance()">เติมเงินเข้าระบบ</button>
+      </div>
+    </div>
+
+    <!-- แถบ 4: ยศตัวแทน -->
     <div class="tab-content" id="tab-agents">
       <div class="card">
         <div class="title">👑 จัดการยศตัวแทนจำหน่าย</div>
@@ -169,13 +196,17 @@
       </div>
     </div>
 
-    <!-- แถบ 4: เปลี่ยนรหัสแอดมิน -->
+    <!-- แถบ 5: รหัสแอดมิน -->
     <div class="tab-content" id="tab-account">
       <div class="card">
-        <div class="title">🔑 เปลี่ยนชื่อผู้ใช้และรหัสผ่านแอดมิน</div>
+        <div class="title">🔑 บัญชีแอดมิน</div>
         <div class="field-group">
-          <label class="field-label">ชื่อผู้ใช้แอดมินใหม่</label>
+          <label class="field-label">ชื่อผู้ใช้แอดมิน</label>
           <input type="text" id="newAdminUser" class="input-box" placeholder="adminpun">
+        </div>
+        <div class="field-group">
+          <label class="field-label">อีเมลแอดมิน</label>
+          <input type="email" id="newAdminEmail" class="input-box" placeholder="natthananlyne@gmail.com">
         </div>
         <div class="field-group">
           <label class="field-label">รหัสผ่านใหม่</label>
@@ -206,21 +237,42 @@
   const DB_USERS = "selrisapp_users";
 
   let adminUser = "adminpun";
-  let adminPass = "291153";
+  let adminEmail = "natthananlyne@gmail.com";
+  let adminPass = "@punpunz9";
   let appsEditData = [];
+
+  // ซิงค์บัญชี adminpun ลงในฐานข้อมูลหน้าร้านให้อัตโนมัติ
+  async function ensureAdminUserExists() {
+    const adminRef = db.collection(DB_USERS).doc(adminUser);
+    const snap = await adminRef.get();
+    if (!snap.exists) {
+      await adminRef.set({
+        username: adminUser,
+        email: adminEmail,
+        password: adminPass,
+        balance: 0,
+        role: "admin",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      await adminRef.update({ role: "admin", email: adminEmail, password: adminPass });
+    }
+  }
 
   db.collection(DB_SITE).doc("admin").onSnapshot(doc => {
     if (doc.exists) {
       const d = doc.data();
       if (d.username) adminUser = d.username;
+      if (d.email) adminEmail = d.email;
       if (d.pass) adminPass = d.pass;
     }
   });
 
-  function handleLogin() {
+  async function handleLogin() {
     const u = document.getElementById('loginUsername').value.trim();
     const p = document.getElementById('loginPassword').value.trim();
     if (u === adminUser && p === adminPass) {
+      await ensureAdminUserExists();
       document.getElementById('loginBox').classList.add('hidden');
       document.getElementById('dashboardBox').classList.remove('hidden');
       loadAllAdminData();
@@ -238,7 +290,6 @@
   }
 
   function loadAllAdminData() {
-    // 1. โหลดข้อมูลร้าน
     db.collection(DB_SITE).doc("config").get().then(doc => {
       const d = doc.exists ? doc.data() : {};
       document.getElementById('cfgShopName').value = d.shopName || "selrisapppremium ♡";
@@ -249,7 +300,9 @@
       document.getElementById('cfgMusic').value = d.musicUrl || "https://file.garden/asG8Gt-rqWIpi3II/%E0%B8%A2%E0%B8%B4%E0%B8%99%E0%B8%94%E0%B8%B5%20Ost.%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%B2%E0%B8%A5%E0%B8%94%E0%B8%B2%20sarah%20salola%20Official%20MV.mp3";
     });
 
-    // 2. โหลดแอพทั้งหมด
+    document.getElementById('newAdminUser').value = adminUser;
+    document.getElementById('newAdminEmail').value = adminEmail;
+
     db.collection(DB_APPS).orderBy("order", "asc").get().then(snap => {
       if (!snap.empty) {
         appsEditData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -380,7 +433,45 @@
     }
   }
 
-  // ระบบปรับยศตัวแทน
+  // ฟังก์ชันลัดเติมเงินเข้าบัญชีแอดมิน adminpun
+  async function quickTopupAdmin() {
+    const amt = parseFloat(document.getElementById('quickAdminAmount').value.trim());
+    if (!amt || isNaN(amt) || amt <= 0) return alert('กรุณากรอกยอดเงินให้ถูกต้องค่ะ');
+
+    await ensureAdminUserExists();
+    const uRef = db.collection(DB_USERS).doc(adminUser);
+    const snap = await uRef.get();
+    const curBal = (snap.data() && snap.data().balance) || 0;
+    const newBal = curBal + amt;
+
+    await uRef.update({ balance: newBal });
+    alert(`เติมเครดิตเข้าบัญชีแอดมิน (${adminUser}) สำเร็จแล้วค่ะ!\nจำนวน: +฿${amt.toFixed(2)}\nยอดคงเหลือในเว็บหลัก: ฿${newBal.toFixed(2)} ♡`);
+  }
+
+  // เติมเงินให้บัญชีอื่นๆ
+  async function adminAddBalance() {
+    const uName = document.getElementById('targetUsername').value.trim();
+    const amount = parseFloat(document.getElementById('addBalanceAmount').value.trim());
+
+    if (!uName) return alert('กรุณากรอกชื่อผู้ใช้ที่ต้องการเติมเงินค่ะ');
+    if (!amount || isNaN(amount) || amount <= 0) return alert('กรุณากรอกจำนวนเงินให้ถูกต้องค่ะ');
+
+    const uRef = db.collection(DB_USERS).doc(uName);
+    const snap = await uRef.get();
+
+    if (!snap.exists) {
+      return alert(`ไม่พบผู้ใช้ "${uName}" ในระบบ กรุณาตรวจสอบชื่อผู้ใช้ใหม่อีกครั้งค่ะ`);
+    }
+
+    const curBal = snap.data().balance || 0;
+    const newBal = curBal + amount;
+
+    await uRef.update({ balance: newBal });
+    alert(`เติมเงินให้คุณ "${uName}" เรียบร้อยแล้วค่ะ!\nจำนวน: +฿${amount.toFixed(2)}\nยอดคงเหลือใหม่: ฿${newBal.toFixed(2)} ♡`);
+    document.getElementById('addBalanceAmount').value = '';
+  }
+
+  // ปรับยศตัวแทน
   async function grantAgentRole() {
     const targetUser = document.getElementById('targetAgentUsername').value.trim();
     if (!targetUser) return alert('กรุณากรอกชื่อผู้ใช้ที่ต้องการปรับยศค่ะ');
@@ -389,11 +480,11 @@
     const snap = await uRef.get();
 
     if (!snap.exists) {
-      return alert(`ไม่พบชื่อผู้ใช้ "${targetUser}" ในระบบ กรุณาตรวจสอบว่าลูกค้าสมัครสมาชิกแล้วหรือยังนะคะ`);
+      return alert(`ไม่พบชื่อผู้ใช้ "${targetUser}" ในระบบค่ะ`);
     }
 
     await uRef.update({ role: 'agent' });
-    alert(`ปรับยศคุณ "${targetUser}" เป็นตัวแทนจำหน่ายเรียบร้อยแล้วค่ะ! ลูกค้าจะเห็นราคาส่งทันที ♡`);
+    alert(`ปรับยศคุณ "${targetUser}" เป็นตัวแทนจำหน่ายเรียบร้อยแล้วค่ะ!`);
     document.getElementById('targetAgentUsername').value = '';
   }
 
@@ -464,12 +555,15 @@
 
   async function updateAdminCredentials() {
     const nu = document.getElementById('newAdminUser').value.trim();
+    const ne = document.getElementById('newAdminEmail').value.trim();
     const np = document.getElementById('newAdminPass').value.trim();
     const payload = {};
     if (nu) { payload.username = nu; adminUser = nu; }
+    if (ne) { payload.email = ne; adminEmail = ne; }
     if (np) { payload.pass = np; adminPass = np; }
 
     await db.collection(DB_SITE).doc("admin").set(payload, { merge: true });
+    await ensureAdminUserExists();
     document.getElementById('newAdminPass').value = '';
     alert("อัปเดตข้อมูลเข้าสู่ระบบแอดมินเรียบร้อยแล้วค่ะ ♡");
   }
