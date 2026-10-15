@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Dashboard ♡ selrisapppremium</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --c-border: #e9d2de;
+      --c-main: #d9b8c5;
+      --c-deep: #b58d9e;
+      --agent-gold: #f59e0b;
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --text: #4d3d44;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Quicksand', 'Mitr', sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #fffafd 0%, #f7e7f0 55%, #eddbe5 100%);
+      color: var(--text); min-height: 100vh; padding: 20px 14px 60px; display: flex; justify-content: center;
+    }
+    .container { width: 100%; max-width: 480px; }
+    .card {
+      background: var(--card-bg); border-radius: 24px; padding: 20px;
+      box-shadow: 0 10px 25px rgba(217, 184, 197, 0.35); border: 1.5px solid #fff; margin-bottom: 16px;
+    }
+    .title { font-size: 18px; font-weight: 700; color: var(--c-deep); text-align: center; margin-bottom: 14px; }
+    .field-group { margin-bottom: 12px; }
+    .field-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; display: block; }
+    .input-box, .textarea-box {
+      width: 100%; padding: 11px 14px; border-radius: 14px; border: 1.5px solid var(--c-border);
+      outline: none; font-size: 13.5px; background: #fff;
+    }
+    .input-box:focus, .textarea-box:focus { border-color: var(--c-deep); }
+    .textarea-box { min-height: 70px; resize: vertical; }
+
+    .nav-tabs {
+      display: flex; gap: 4px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0; padding: 9px 12px; border: none; border-radius: 16px;
+      background: #ffffff; color: var(--text); font-weight: 600; cursor: pointer;
+      border: 1px solid var(--c-border); font-size: 12.5px;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--c-main), var(--c-deep));
+      color: #fff; border-color: transparent;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .app-admin-card {
+      background: #fff; border: 1.5px solid var(--c-border); border-radius: 18px;
+      padding: 14px; margin-bottom: 12px;
+    }
+    .plan-stock-card {
+      background: #fdf2f8; border: 1px dashed var(--c-deep); border-radius: 12px;
+      padding: 10px; margin-top: 8px;
+    }
+
+    .btn {
+      width: 100%; padding: 12px; border-radius: 18px; border: none; font-size: 14.5px;
+      font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--c-main), var(--c-deep));
+      color: #fff; box-shadow: 0 4px 14px rgba(181, 141, 158, 0.35); margin-top: 8px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-secondary {
+      background: #fff; color: var(--c-deep); border: 1.5px solid var(--c-border); box-shadow: none;
+    }
+
+    /* ตารางตัวแทน */
+    .agent-item-card {
+      background: #ffffff; border: 1px solid var(--c-border); border-radius: 14px;
+      padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- ล็อกอินแอดมิน -->
+  <div class="card" id="loginBox">
+    <div class="title">🔐 ระบบแอดมิน ♡ selrisapppremium</div>
+    <div class="field-group">
+      <label class="field-label">ชื่อผู้ใช้แอดมิน</label>
+      <input type="text" id="loginUsername" class="input-box" placeholder="adminpun">
+    </div>
+    <div class="field-group">
+      <label class="field-label">รหัสผ่าน</label>
+      <input type="password" id="loginPassword" class="input-box" placeholder="291153">
+    </div>
+    <button type="button" class="btn" onclick="handleLogin()">เข้าสู่ระบบแอดมิน ♡</button>
+  </div>
+
+  <!-- แผงแดชบอร์ด -->
+  <div id="dashboardBox" class="hidden">
+    <div class="nav-tabs">
+      <button type="button" class="tab-btn active" onclick="switchAdminTab('general')">1. ร้านค้า</button>
+      <button type="button" class="tab-btn" onclick="switchAdminTab('apps')">2. แอพ & 2 ราคา</button>
+      <button type="button" class="tab-btn" onclick="switchAdminTab('agents')">3. ยศตัวแทน</button>
+      <button type="button" class="tab-btn" onclick="switchAdminTab('account')">4. รหัสแอดมิน</button>
+    </div>
+
+    <!-- แถบ 1: ข้อมูลหน้าร้าน -->
+    <div class="tab-content active" id="tab-general">
+      <div class="card">
+        <div class="title">🌸 ข้อมูลโปรไฟล์ร้าน</div>
+        <div class="field-group">
+          <label class="field-label">ชื่อร้าน</label>
+          <input type="text" id="cfgShopName" class="input-box">
+        </div>
+        <div class="field-group">
+          <label class="field-label">คำอธิบายร้าน (Bio)</label>
+          <textarea id="cfgShopBio" class="textarea-box"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">URL รูปแบนเนอร์ (GIF/JPG)</label>
+          <input type="text" id="cfgBanner" class="input-box">
+        </div>
+        <div class="field-group">
+          <label class="field-label">URL รูปโปรไฟล์</label>
+          <input type="text" id="cfgProfile" class="input-box">
+        </div>
+        <div class="field-group">
+          <label class="field-label">URL LINE Officials</label>
+          <input type="text" id="cfgLineOa" class="input-box">
+        </div>
+        <div class="field-group">
+          <label class="field-label">URL เพลง (.mp3)</label>
+          <input type="text" id="cfgMusic" class="input-box">
+        </div>
+        <button type="button" class="btn" onclick="saveGeneralConfig()">บันทึกข้อมูลหน้าร้าน</button>
+      </div>
+    </div>
+
+    <!-- แถบ 2: แอพ & ตั้ง 2 ราคา (ราคาปลีก & ราคาส่งตัวแทน) -->
+    <div class="tab-content" id="tab-apps">
+      <div class="card">
+        <div class="title">📱 จัดการแอพ, สต็อก & ราคาส่งตัวแทน</div>
+        <div id="appsListContainer"></div>
+        <button type="button" class="btn btn-secondary" onclick="addNewAppBox()">+ เพิ่มกล่องแอพพรีเมี่ยมใหม่</button>
+        <button type="button" class="btn" onclick="saveAllApps()">บันทึกรายการแอพ & สต็อกทั้งหมด</button>
+      </div>
+    </div>
+
+    <!-- แถบ 3: จัดการยศตัวแทนจำหน่าย -->
+    <div class="tab-content" id="tab-agents">
+      <div class="card">
+        <div class="title">👑 จัดการยศตัวแทนจำหน่าย</div>
+        <div class="field-group">
+          <label class="field-label">พิมพ์ชื่อผู้ใช้ (Username) ที่ต้องการปรับยศเป็นตัวแทน</label>
+          <input type="text" id="targetAgentUsername" class="input-box" placeholder="กรอก username ลูกค้า">
+        </div>
+        <button type="button" class="btn" onclick="grantAgentRole()">+ แต่งตั้งเป็นตัวแทน (ได้ราคาส่งทันที)</button>
+
+        <h4 style="font-size:14px; font-weight:700; color:var(--c-deep); margin:18px 0 8px;">รายชื่อตัวแทนในระบบปัจจุบัน:</h4>
+        <div id="agentsListContainer"></div>
+      </div>
+    </div>
+
+    <!-- แถบ 4: เปลี่ยนรหัสแอดมิน -->
+    <div class="tab-content" id="tab-account">
+      <div class="card">
+        <div class="title">🔑 เปลี่ยนชื่อผู้ใช้และรหัสผ่านแอดมิน</div>
+        <div class="field-group">
+          <label class="field-label">ชื่อผู้ใช้แอดมินใหม่</label>
+          <input type="text" id="newAdminUser" class="input-box" placeholder="adminpun">
+        </div>
+        <div class="field-group">
+          <label class="field-label">รหัสผ่านใหม่</label>
+          <input type="password" id="newAdminPass" class="input-box" placeholder="ปล่อยว่างหากไม่เปลี่ยน">
+        </div>
+        <button type="button" class="btn" onclick="updateAdminCredentials()">บันทึกข้อมูลแอดมิน</button>
+        <button type="button" class="btn btn-secondary" onclick="logout()">ออกจากระบบ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCpAGDSy1NRgmLV_g7qJrCpwOhU9MrfQyY",
+    authDomain: "benefitie.firebaseapp.com",
+    projectId: "benefitie",
+    storageBucket: "benefitie.firebasestorage.app",
+    messagingSenderId: "270365672215",
+    appId: "1:270365672215:web:230d1491091e26ce83ed52"
+  };
+
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const DB_SITE = "selrisapp_site";
+  const DB_APPS = "selrisapp_apps";
+  const DB_USERS = "selrisapp_users";
+
+  let adminUser = "adminpun";
+  let adminPass = "291153";
+  let appsEditData = [];
+
+  db.collection(DB_SITE).doc("admin").onSnapshot(doc => {
+    if (doc.exists) {
+      const d = doc.data();
+      if (d.username) adminUser = d.username;
+      if (d.pass) adminPass = d.pass;
+    }
+  });
+
+  function handleLogin() {
+    const u = document.getElementById('loginUsername').value.trim();
+    const p = document.getElementById('loginPassword').value.trim();
+    if (u === adminUser && p === adminPass) {
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('dashboardBox').classList.remove('hidden');
+      loadAllAdminData();
+      listenAgentsList();
+    } else {
+      alert('ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้องค่ะ');
+    }
+  }
+
+  function switchAdminTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById(`tab-${name}`).classList.add('active');
+  }
+
+  function loadAllAdminData() {
+    // 1. โหลดข้อมูลร้าน
+    db.collection(DB_SITE).doc("config").get().then(doc => {
+      const d = doc.exists ? doc.data() : {};
+      document.getElementById('cfgShopName').value = d.shopName || "selrisapppremium ♡";
+      document.getElementById('cfgShopBio').value = d.shopBio || `ยินดีต้อนรับเข้าสู่ร้าน selrisapppremium ♡\nเชิญเลือกดูแอพพรีเมี่ยมก่อนได้เลยนะคะ มีปัญหาตรงไหนทักไลน์ @861pblyp`;
+      document.getElementById('cfgBanner').value = d.bannerImg || "https://files.catbox.moe/3y894z.gif";
+      document.getElementById('cfgProfile').value = d.profileImg || "https://files.catbox.moe/r28bpo.jpeg";
+      document.getElementById('cfgLineOa').value = d.lineOaUrl || "https://lin.ee/t0MNqJV";
+      document.getElementById('cfgMusic').value = d.musicUrl || "https://file.garden/asG8Gt-rqWIpi3II/%E0%B8%A2%E0%B8%B4%E0%B8%99%E0%B8%94%E0%B8%B5%20Ost.%E0%B8%A1%E0%B8%B2%E0%B8%95%E0%B8%B2%E0%B8%A5%E0%B8%94%E0%B8%B2%20sarah%20salola%20Official%20MV.mp3";
+    });
+
+    // 2. โหลดแอพทั้งหมด
+    db.collection(DB_APPS).orderBy("order", "asc").get().then(snap => {
+      if (!snap.empty) {
+        appsEditData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } else {
+        appsEditData = [
+          {
+            name: "netflix",
+            thumb: "https://files.catbox.moe/kszmeo.jpeg",
+            desc: "โดนปิดไม่รับเคลมถ้าไม่ซื้อแบบเคลม ♡",
+            order: 0,
+            plans: [
+              { name: "1 day", price: 10, agentPrice: 8, stock: [] },
+              { name: "1 day เคลม", price: 15, agentPrice: 12, stock: [] },
+              { name: "7 day", price: 35, agentPrice: 30, stock: [] },
+              { name: "7 day เคลม", price: 40, agentPrice: 35, stock: [] },
+              { name: "30 day", price: 105, agentPrice: 90, stock: [] },
+              { name: "30 day เคลม", price: 110, agentPrice: 95, stock: [] }
+            ]
+          },
+          {
+            name: "youtube",
+            thumb: "https://files.catbox.moe/o8wqpz.jpeg",
+            desc: "",
+            order: 1,
+            plans: [
+              { name: "30 d ไม่ต่อเมล", price: 20, agentPrice: 15, stock: [] },
+              { name: "30 d เคลม", price: 25, agentPrice: 20, stock: [] }
+            ]
+          },
+          {
+            name: "spotify",
+            thumb: "https://files.catbox.moe/c7sg6u.jpeg",
+            desc: "",
+            order: 2,
+            plans: [
+              { name: "30 d ( เมลลูกค้า )", price: 55, agentPrice: 45, stock: [] },
+              { name: "30 d ( เมลร้าน )", price: 65, agentPrice: 55, stock: [] }
+            ]
+          }
+        ];
+      }
+      renderAppsEditor();
+    });
+  }
+
+  function renderAppsEditor() {
+    const box = document.getElementById('appsListContainer');
+    box.innerHTML = '';
+
+    appsEditData.forEach((app, aIdx) => {
+      const card = document.createElement('div');
+      card.className = 'app-admin-card';
+
+      let plansHtml = '';
+      (app.plans || []).forEach((p, pIdx) => {
+        const stockStr = (p.stock || []).join('\n');
+        plansHtml += `
+          <div class="plan-stock-card">
+            <div style="display:flex; gap:6px; margin-bottom:4px; align-items:center;">
+              <input type="text" class="input-box" value="${p.name}" style="flex:2;" placeholder="ชื่อแพ็กเกจ" oninput="appsEditData[${aIdx}].plans[${pIdx}].name=this.value">
+              <input type="number" class="input-box" value="${p.price}" style="flex:1;" placeholder="ราคาปกติ (฿)" oninput="appsEditData[${aIdx}].plans[${pIdx}].price=parseFloat(this.value)||0">
+              <input type="number" class="input-box" value="${p.agentPrice || ''}" style="flex:1; border-color:var(--agent-gold); background:#fffbeb;" placeholder="ราคาส่ง (฿)" oninput="appsEditData[${aIdx}].plans[${pIdx}].agentPrice=parseFloat(this.value)||0">
+              <button type="button" style="background:#fee2e2; border:none; color:#ef4444; border-radius:10px; padding:0 8px; height:36px;" onclick="removePlan(${aIdx}, ${pIdx})">✕</button>
+            </div>
+            <label style="font-size:11.5px; color:#475569; font-weight:600;">กล่องเติมรหัสสต็อก (แยก 1 บรรทัด = 1 รหัส):</label>
+            <textarea class="textarea-box" style="font-size:12px; font-family:monospace;" placeholder="ใส่รหัสแอพที่นี่..." oninput="updateStock(${aIdx}, ${pIdx}, this.value)">${stockStr}</textarea>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">คงเหลือในสต็อก: ${(p.stock || []).length} ชิ้น</div>
+          </div>
+        `;
+      });
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="color:var(--c-deep);">กล่องแอพที่ ${aIdx+1}</strong>
+          <button type="button" style="background:#fee2e2; border:none; color:#ef4444; border-radius:10px; padding:4px 8px; font-size:12px;" onclick="deleteApp(${aIdx})">ลบแอพนี้</button>
+        </div>
+        <div class="field-group">
+          <label class="field-label">ชื่อแอพ</label>
+          <input type="text" class="input-box" value="${app.name}" oninput="appsEditData[${aIdx}].name=this.value">
+        </div>
+        <div class="field-group">
+          <label class="field-label">URL รูปปกแอพ</label>
+          <input type="text" class="input-box" value="${app.thumb}" oninput="appsEditData[${aIdx}].thumb=this.value">
+        </div>
+        <div class="field-group">
+          <label class="field-label">คำอธิบายเมื่อกดเข้าไป</label>
+          <input type="text" class="input-box" value="${app.desc || ''}" oninput="appsEditData[${aIdx}].desc=this.value">
+        </div>
+        
+        <label class="field-label" style="margin-top:10px;">📦 แพ็กเกจ (ช่องขวาสุดคือ ราคาส่งตัวแทน):</label>
+        ${plansHtml}
+        <button type="button" class="btn btn-secondary" style="padding:8px; font-size:12px; margin-top:8px;" onclick="addPlanToApp(${aIdx})">+ เพิ่มแพ็กเกจย่อย</button>
+      `;
+      box.appendChild(card);
+    });
+  }
+
+  function updateStock(aIdx, pIdx, text) {
+    const lines = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+    appsEditData[aIdx].plans[pIdx].stock = lines;
+  }
+
+  function addPlanToApp(aIdx) {
+    appsEditData[aIdx].plans.push({ name: "แพ็กเกจใหม่", price: 10, agentPrice: 8, stock: [] });
+    renderAppsEditor();
+  }
+
+  function removePlan(aIdx, pIdx) {
+    appsEditData[aIdx].plans.splice(pIdx, 1);
+    renderAppsEditor();
+  }
+
+  function addNewAppBox() {
+    appsEditData.push({
+      name: "แอพใหม่",
+      thumb: "https://files.catbox.moe/kszmeo.jpeg",
+      desc: "",
+      order: appsEditData.length,
+      plans: [{ name: "30 day", price: 50, agentPrice: 40, stock: [] }]
+    });
+    renderAppsEditor();
+  }
+
+  function deleteApp(aIdx) {
+    if (confirm("ต้องการลบกล่องแอพนี้ใช่ไหมคะ?")) {
+      appsEditData.splice(aIdx, 1);
+      renderAppsEditor();
+    }
+  }
+
+  // ระบบปรับยศตัวแทน
+  async function grantAgentRole() {
+    const targetUser = document.getElementById('targetAgentUsername').value.trim();
+    if (!targetUser) return alert('กรุณากรอกชื่อผู้ใช้ที่ต้องการปรับยศค่ะ');
+
+    const uRef = db.collection(DB_USERS).doc(targetUser);
+    const snap = await uRef.get();
+
+    if (!snap.exists) {
+      return alert(`ไม่พบชื่อผู้ใช้ "${targetUser}" ในระบบ กรุณาตรวจสอบว่าลูกค้าสมัครสมาชิกแล้วหรือยังนะคะ`);
+    }
+
+    await uRef.update({ role: 'agent' });
+    alert(`ปรับยศคุณ "${targetUser}" เป็นตัวแทนจำหน่ายเรียบร้อยแล้วค่ะ! ลูกค้าจะเห็นราคาส่งทันที ♡`);
+    document.getElementById('targetAgentUsername').value = '';
+  }
+
+  function listenAgentsList() {
+    db.collection(DB_USERS).where("role", "==", "agent").onSnapshot(snap => {
+      const box = document.getElementById('agentsListContainer');
+      box.innerHTML = '';
+      if (snap.empty) {
+        box.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">ยังไม่มีตัวแทนในระบบ</p>';
+        return;
+      }
+      snap.forEach(doc => {
+        const d = doc.data();
+        const div = document.createElement('div');
+        div.className = 'agent-item-card';
+        div.innerHTML = `
+          <div>
+            <strong style="color:var(--agent-gold); font-size:13.5px;">👑 ${d.username}</strong>
+            <div style="font-size:11px; color:var(--text-muted);">${d.email} | ยอดเงิน: ฿${(d.balance||0).toFixed(2)}</div>
+          </div>
+          <button type="button" style="background:#fee2e2; border:none; color:#ef4444; border-radius:10px; padding:4px 8px; font-size:11.5px; cursor:pointer;" onclick="revokeAgentRole('${doc.id}')">ปลดยศ</button>
+        `;
+        box.appendChild(div);
+      });
+    });
+  }
+
+  async function revokeAgentRole(username) {
+    if (confirm(`ต้องการปลดยศตัวแทนของคุณ "${username}" กลับเป็นลูกค้าธรรมดาใช่ไหมคะ?`)) {
+      await db.collection(DB_USERS).doc(username).update({ role: 'user' });
+      alert(`ปลดยศ "${username}" เรียบร้อยแล้วค่ะ`);
+    }
+  }
+
+  async function saveGeneralConfig() {
+    const payload = {
+      shopName: document.getElementById('cfgShopName').value.trim(),
+      shopBio: document.getElementById('cfgShopBio').value.trim(),
+      bannerImg: document.getElementById('cfgBanner').value.trim(),
+      profileImg: document.getElementById('cfgProfile').value.trim(),
+      lineOaUrl: document.getElementById('cfgLineOa').value.trim(),
+      musicUrl: document.getElementById('cfgMusic').value.trim(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await db.collection(DB_SITE).doc("config").set(payload, { merge: true });
+    alert("บันทึกข้อมูลหน้าร้านเรียบร้อยแล้วค่ะ ♡");
+  }
+
+  async function saveAllApps() {
+    const batch = db.batch();
+    const snap = await db.collection(DB_APPS).get();
+    snap.docs.forEach(d => batch.delete(d.ref));
+
+    appsEditData.forEach((app, idx) => {
+      const ref = db.collection(DB_APPS).doc(`app_${idx}`);
+      batch.set(ref, {
+        name: app.name,
+        thumb: app.thumb,
+        desc: app.desc || "",
+        order: idx,
+        plans: app.plans || []
+      });
+    });
+
+    await batch.commit();
+    alert("บันทึกรายการแอพ, สต็อก และราคาส่งทั้งหมดขึ้นระบบเรียบร้อยแล้วค่ะ ♡");
+  }
+
+  async function updateAdminCredentials() {
+    const nu = document.getElementById('newAdminUser').value.trim();
+    const np = document.getElementById('newAdminPass').value.trim();
+    const payload = {};
+    if (nu) { payload.username = nu; adminUser = nu; }
+    if (np) { payload.pass = np; adminPass = np; }
+
+    await db.collection(DB_SITE).doc("admin").set(payload, { merge: true });
+    document.getElementById('newAdminPass').value = '';
+    alert("อัปเดตข้อมูลเข้าสู่ระบบแอดมินเรียบร้อยแล้วค่ะ ♡");
+  }
+
+  function logout() {
+    document.getElementById('dashboardBox').classList.add('hidden');
+    document.getElementById('loginBox').classList.remove('hidden');
+    document.getElementById('loginPassword').value = '';
+  }
+</script>
+</body>
+</html>
