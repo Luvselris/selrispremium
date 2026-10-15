@@ -41,7 +41,7 @@
       outline: none; font-size: 13.5px; background: #fff;
     }
     .input-box:focus, .textarea-box:focus { border-color: var(--c-deep); }
-    .textarea-box { min-height: 70px; resize: vertical; }
+    .textarea-box { min-height: 80px; resize: vertical; }
 
     .nav-tabs {
       display: flex; gap: 4px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none;
@@ -144,10 +144,10 @@
       </div>
     </div>
 
-    <!-- แถบ 2: แอพ & 2 ราคา -->
+    <!-- แถบ 2: แอพ & 2 ราคา + แบบฟอร์มสต็อกยาวๆ -->
     <div class="tab-content" id="tab-apps">
       <div class="card">
-        <div class="title">📱 จัดการแอพ, สต็อก & ราคาส่งตัวแทน</div>
+        <div class="title">📱 จัดการแอพ, แบบฟอร์มสต็อก & ราคาส่ง</div>
         <div id="appsListContainer"></div>
         <button type="button" class="btn btn-secondary" onclick="addNewAppBox()">+ เพิ่มกล่องแอพพรีเมี่ยมใหม่</button>
         <button type="button" class="btn" onclick="saveAllApps()">บันทึกรายการแอพ & สต็อกทั้งหมด</button>
@@ -159,10 +159,9 @@
       <div class="card">
         <div class="title">💰 เติมเครดิตแอดมิน & ลูกค้า</div>
         
-        <!-- กล่องลัดเติมเงินเข้า adminpun -->
         <div style="background:#fdf2f8; border:1.5px dashed var(--c-deep); border-radius:16px; padding:14px; margin-bottom:16px;">
           <div style="font-weight:700; color:var(--c-deep); font-size:14px;">👑 เติมเครดิตด่วนเข้าบัญชีแอดมิน (adminpun)</div>
-          <div style="font-size:12px; color:var(--text); margin:4px 0 10px;">ยอดเงินจะขึ้นที่หน้าเว็บหลักทันที สำหรับใช้กดซื้อสินค้าทดสอบ</div>
+          <div style="font-size:12px; color:var(--text); margin:4px 0 10px;">ยอดเงินจะเข้าบัญชีแอดมินทันที สำหรับใช้กดซื้อสินค้าทดสอบ</div>
           <div style="display:flex; gap:8px;">
             <input type="number" id="quickAdminAmount" class="input-box" placeholder="ระบุยอดเงิน เช่น 9999" value="9999">
             <button type="button" class="btn" style="width:auto; white-space:nowrap; margin-top:0;" onclick="quickTopupAdmin()">⚡ เติมเข้าแอดมิน</button>
@@ -241,7 +240,9 @@
   let adminPass = "@punpunz9";
   let appsEditData = [];
 
-  // ซิงค์บัญชี adminpun ลงในฐานข้อมูลหน้าร้านให้อัตโนมัติ
+  // ตัวแบ่งแยกระหว่างแบบฟอร์ม
+  const FORM_SEPARATOR = "\n===\n";
+
   async function ensureAdminUserExists() {
     const adminRef = db.collection(DB_USERS).doc(adminUser);
     const snap = await adminRef.get();
@@ -358,7 +359,7 @@
 
       let plansHtml = '';
       (app.plans || []).forEach((p, pIdx) => {
-        const stockStr = (p.stock || []).join('\n');
+        const stockStr = (p.stock || []).join(FORM_SEPARATOR);
         plansHtml += `
           <div class="plan-stock-card">
             <div style="display:flex; gap:6px; margin-bottom:4px; align-items:center;">
@@ -367,9 +368,13 @@
               <input type="number" class="input-box" value="${p.agentPrice || ''}" style="flex:1; border-color:var(--agent-gold); background:#fffbeb;" placeholder="ราคาส่ง (฿)" oninput="appsEditData[${aIdx}].plans[${pIdx}].agentPrice=parseFloat(this.value)||0">
               <button type="button" style="background:#fee2e2; border:none; color:#ef4444; border-radius:10px; padding:0 8px; height:36px;" onclick="removePlan(${aIdx}, ${pIdx})">✕</button>
             </div>
-            <label style="font-size:11.5px; color:#475569; font-weight:600;">กล่องเติมรหัสสต็อก (แยก 1 บรรทัด = 1 รหัส):</label>
-            <textarea class="textarea-box" style="font-size:12px; font-family:monospace;" placeholder="ใส่รหัสแอพที่นี่..." oninput="updateStock(${aIdx}, ${pIdx}, this.value)">${stockStr}</textarea>
-            <div style="font-size:11px; color:#64748b; margin-top:2px;">คงเหลือในสต็อก: ${(p.stock || []).length} ชิ้น</div>
+            <label style="font-size:11.5px; color:#475569; font-weight:700;">
+              📝 วางแบบฟอร์มส่งรหัสยาวๆ ได้เลย (หากมีหลายชุดให้คั่นด้วย ===):
+            </label>
+            <textarea class="textarea-box" style="font-size:12px; font-family:monospace; min-height:120px; white-space:pre;" placeholder="วางแบบฟอร์มส่งรหัสที่นี่ได้ยาวๆ เลยค่ะ..." oninput="updateStock(${aIdx}, ${pIdx}, this.value)">${stockStr}</textarea>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">
+              คงเหลือในสต็อก: <strong style="color:var(--c-deep);">${(p.stock || []).length}</strong> ชุด
+            </div>
           </div>
         `;
       });
@@ -392,7 +397,7 @@
           <input type="text" class="input-box" value="${app.desc || ''}" oninput="appsEditData[${aIdx}].desc=this.value">
         </div>
         
-        <label class="field-label" style="margin-top:10px;">📦 แพ็กเกจ (ช่องขวาสุดคือ ราคาส่งตัวแทน):</label>
+        <label class="field-label" style="margin-top:10px;">📦 แพ็กเกจ & แบบฟอร์มสต็อก (ช่องขวาคือ ราคาส่ง):</label>
         ${plansHtml}
         <button type="button" class="btn btn-secondary" style="padding:8px; font-size:12px; margin-top:8px;" onclick="addPlanToApp(${aIdx})">+ เพิ่มแพ็กเกจย่อย</button>
       `;
@@ -400,9 +405,14 @@
     });
   }
 
+  // แยกชุดฟอร์มสต็อกด้วย ===
   function updateStock(aIdx, pIdx, text) {
-    const lines = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-    appsEditData[aIdx].plans[pIdx].stock = lines;
+    if (!text || !text.trim()) {
+      appsEditData[aIdx].plans[pIdx].stock = [];
+      return;
+    }
+    const forms = text.split(/\n?===\n?/).map(s => s.trim()).filter(s => s.length > 0);
+    appsEditData[aIdx].plans[pIdx].stock = forms;
   }
 
   function addPlanToApp(aIdx) {
@@ -433,7 +443,7 @@
     }
   }
 
-  // ฟังก์ชันลัดเติมเงินเข้าบัญชีแอดมิน adminpun
+  // เติมเงินลัดเข้า adminpun
   async function quickTopupAdmin() {
     const amt = parseFloat(document.getElementById('quickAdminAmount').value.trim());
     if (!amt || isNaN(amt) || amt <= 0) return alert('กรุณากรอกยอดเงินให้ถูกต้องค่ะ');
@@ -448,7 +458,6 @@
     alert(`เติมเครดิตเข้าบัญชีแอดมิน (${adminUser}) สำเร็จแล้วค่ะ!\nจำนวน: +฿${amt.toFixed(2)}\nยอดคงเหลือในเว็บหลัก: ฿${newBal.toFixed(2)} ♡`);
   }
 
-  // เติมเงินให้บัญชีอื่นๆ
   async function adminAddBalance() {
     const uName = document.getElementById('targetUsername').value.trim();
     const amount = parseFloat(document.getElementById('addBalanceAmount').value.trim());
@@ -471,7 +480,6 @@
     document.getElementById('addBalanceAmount').value = '';
   }
 
-  // ปรับยศตัวแทน
   async function grantAgentRole() {
     const targetUser = document.getElementById('targetAgentUsername').value.trim();
     if (!targetUser) return alert('กรุณากรอกชื่อผู้ใช้ที่ต้องการปรับยศค่ะ');
